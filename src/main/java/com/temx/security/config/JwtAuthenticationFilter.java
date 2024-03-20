@@ -59,7 +59,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
         // Extract user_id from token
         Long userId = jwtService.extractClaim(jwt, claims -> claims.get("user_id", Long.class));
-        
+        // Ensure userDetails is an instance of User and set userId
+        if (userDetails instanceof User) {
+          ((User) userDetails).setId(Math.toIntExact(userId));
+        } else {
+          throw new RuntimeException("UserDetails is not an instance of User class");
+        }
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             userDetails,

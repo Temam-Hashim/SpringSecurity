@@ -49,7 +49,7 @@ public class AuthenticationService {
     saveUserToken(savedUser, jwtToken);
 
 //    send email to registered user
-    emailService.sendEmail(request.getEmail(),"Welcome to our site","your registration is successful and please confirm your email address by clicking the link below" + " https://www.temxtech.vercel.app");
+//    emailService.sendEmail(request.getEmail(),"Welcome to our site","your registration is successful and please confirm your email address by clicking the link below" + " https://www.temxtech.vercel.app");
 
     return AuthenticationResponse.builder()
         .accessToken(jwtToken)
@@ -72,6 +72,7 @@ public class AuthenticationService {
     revokeAllUserTokens(user);
     saveUserToken(user, jwtToken);
     return AuthenticationResponse.builder()
+            .message("Login successful!")
         .accessToken(jwtToken)
             .refreshToken(refreshToken)
         .build();

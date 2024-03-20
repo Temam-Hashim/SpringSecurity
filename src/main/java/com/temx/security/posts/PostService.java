@@ -1,15 +1,17 @@
 package com.temx.security.posts;
 
+import com.temx.security.config.JwtService;
 import com.temx.security.exception.NotFoundException;
-import com.temx.security.exception.RequestBodyRequired;
+import com.temx.security.upload.UploadImageService;
 import com.temx.security.user.User;
 import com.temx.security.user.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +21,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final UploadImageService uploadImageService;
 
 
     public List<Posts> getPosts(){
@@ -37,18 +40,29 @@ public class PostService {
         return post;
     }
 
-    public Posts createPost(Posts post) {
+    public Posts createPost(CreatePostRequest request) throws IOException {
+        // Extract userId from token
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
+        String username = authentication.getName();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("No User found with ID: " + email));
-        System.out.println(user);
+       User user = userRepository.findByEmail(username).orElseThrow(()-> new NotFoundException("No user found"));
 
-        post.setUser(user);
+        // Upload image and get the image URL or filename
+//        String imageUrl = uploadImageService.uploadImage(request.getImageFile());
+        String imageUrl = uploadImageService.cloudinaryImageUpload(request.getImageFile());
 
+        // Create a new post and associate the image URL with it
+        Posts post = new Posts();
+        post.setTitle(request.getTitle());
+        post.setDescription(request.getDescription());
+        post.setTags(request.getTags());
+        post.setImg(imageUrl); // Set the image URL for the post
+        post.setUser(user); // Set the userId for the post
+
+        // Save the post to the database
         return postRepository.save(post);
     }
+
 
     public Posts updatePost(long postId,Posts updatedPost) {
         Optional<Posts> originalPost = postRepository.findById(postId);
@@ -75,6 +89,7 @@ public class PostService {
             // Handle the case where the post does not exist
             throw new NotFoundException("Post with Id "+postId+" not found");
         }
+
 
     }
 
